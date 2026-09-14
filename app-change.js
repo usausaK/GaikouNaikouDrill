@@ -49,21 +49,28 @@ function makeChange(kind){
   };
 }
 
-const after=(p,k)=>(k?p.p:p.q)+`×□ ${p.sign} ${p.delta}`;
+function maru(n){
+  const nums=['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+  return nums[n] || `(${n})`;
+}
+
+const after=(p,k)=>`${maru(k?p.p:p.q)} ${p.sign} ${p.delta}`;
 
 function renderChange(p){
   const K=after(p,1),H=after(p,0);
+  const kp=maru(p.p), hq=maru(p.q);
 
   if(step===0){
-    const c=`一成 ＝ ${p.p}×□、尋子 ＝ ${p.q}×□`;
+    const c=`一成 ＝ ${kp}、尋子 ＝ ${hq}`;
     return card(`
       <div class="tag">変化する比 STEP 1 / 7</div>${phrase()}
       <div class="story">${p.story}</div>
-      <div class="stepTitle">はじめの比を□で表そう</div>
+      <div class="stepTitle">はじめの比を①を使って表そう</div>
+      <div class="prompt">比の「1」にあたる量を <b>①</b> とします。3：2なら、一成は③、尋子は②です。</div>
       <div class="choices">${choice([
         {t:c,c:1},
-        {t:`一成 ＝ ${p.q}×□、尋子 ＝ ${p.p}×□`,c:0},
-        {t:`一成 ＝ ${p.p+p.q}×□、尋子 ＝ □`,c:0}
+        {t:`一成 ＝ ${hq}、尋子 ＝ ${kp}`,c:0},
+        {t:`一成 ＝ ${maru(p.p+p.q)}、尋子 ＝ ①`,c:0}
       ])}</div>
       <div id="feedback" class="feedback"></div>
       <button id="next" class="next primary" onclick="nextStep()">次へ</button>
@@ -76,12 +83,12 @@ function renderChange(p){
     return card(`
       <div class="tag">変化する比 STEP 2 / 7</div>${phrase()}
       <div class="story">${p.story}</div>
-      <div class="eqbox">はじめ：一成＝${p.p}×□　尋子＝${p.q}×□</div>
+      <div class="eqbox">はじめ：一成＝${kp}　尋子＝${hq}</div>
       <div class="stepTitle">変化したあとの量を表そう</div>
       <div class="choices">${choice([
         {t:c,c:1},
-        {t:`一成 ＝ ${p.p}×□ ${ws} ${p.delta}、尋子 ＝ ${p.q}×□ ${ws} ${p.delta}`,c:0},
-        {t:`一成 ＝ ${p.p}×□、尋子 ＝ ${p.q}×□`,c:0}
+        {t:`一成 ＝ ${kp} ${ws} ${p.delta}、尋子 ＝ ${hq} ${ws} ${p.delta}`,c:0},
+        {t:`一成 ＝ ${kp}、尋子 ＝ ${hq}`,c:0}
       ])}</div>
       <div id="feedback" class="feedback"></div>
       <button id="next" class="next primary" onclick="nextStep()">次へ</button>
@@ -139,13 +146,19 @@ function renderChange(p){
   }
 
   if(step===5){
+    const leftCoef=p.q*p.r;
+    const rightCoef=p.p*p.s;
+    const leftConst=p.delta*p.r;
+    const rightConst=p.delta*p.s;
+    const op=p.sign;
     return card(`
       <div class="tag">変化する比 STEP 6 / 7</div>${phrase()}
       <div class="story">${p.story}</div>
       <div class="eqbox">(${H}) × ${p.r} ＝ (${K}) × ${p.s}</div>
-      <div class="stepTitle">まず、□の値を求めよう</div>
-      <div class="prompt">式を計算して、<b>□そのもの</b>の値を答えます。</div>
-      <div class="inputRow"><b>□ ＝</b><input id="baseAns" inputmode="numeric" placeholder="?"> <b>${p.unit}</b></div>
+      <div class="eqbox">${maru(leftCoef)} ${op} ${leftConst} ＝ ${maru(rightCoef)} ${op} ${rightConst}</div>
+      <div class="stepTitle">①の値を求めよう</div>
+      <div class="prompt">丸数字の差を使って、<b>①そのもの</b>の値を求めます。</div>
+      <div class="inputRow"><b>① ＝</b><input id="baseAns" inputmode="numeric" placeholder="?"> <b>${p.unit}</b></div>
       <button class="primary" style="width:100%;margin-top:14px" onclick="checkBase(${p.base},'${p.unit}')">答え合わせ</button>
       <div id="feedback" class="feedback"></div>
       <button id="next" class="next primary" onclick="nextStep()">STEP 7へ</button>
@@ -155,9 +168,9 @@ function renderChange(p){
   return card(`
     <div class="tag">変化する比 STEP 7 / 7</div>${phrase()}
     <div class="story">${p.story}</div>
-    <div class="eqbox">□ ＝ ${p.base}${p.unit}</div>
+    <div class="eqbox">① ＝ ${p.base}${p.unit}</div>
     <div class="stepTitle">はじめの一成の${p.noun}を求めよう</div>
-    <div class="prompt">一成は <b>${p.p}×□</b> なので、<b>${p.p} × ${p.base}</b> を計算します。</div>
+    <div class="prompt">一成は <b>${kp}</b> なので、<b>① × ${p.p} ＝ ${p.base} × ${p.p}</b> を計算します。</div>
     <div class="inputRow"><input id="ca" inputmode="numeric" placeholder="答え"><b>${p.unit}</b></div>
     <button class="primary" style="width:100%;margin-top:14px" onclick="checkChange(${p.initialK},${p.initialH},'${p.unit}')">答え合わせ</button>
     <div id="feedback" class="feedback"></div>
@@ -170,11 +183,11 @@ function checkBase(base,u){
   if(+document.getElementById('baseAns').value===base){
     locked=true;
     score++;
-    feedback(true,`正解！ <strong>□＝${base}${u}</strong><br>次は、この□を使って一成の元の量を求めます。`);
+    feedback(true,`正解！ <strong>①＝${base}${u}</strong><br>次は、この①を使って一成の元の量を求めます。`);
     showNext();
     updateHeader();
   }else{
-    feedback(false,'もう一度。内項の積＝外項の積の式を計算して、まず□だけを求めよう。');
+    feedback(false,'もう一度。内項の積＝外項の積の式を計算して、まず①を求めよう。');
   }
 }
 
@@ -187,6 +200,6 @@ function checkChange(a,h,u){
     showNext();
     updateHeader();
   }else{
-    feedback(false,'□の値は求められています。一成は「比の一成側の数 × □」で計算しよう。');
+    feedback(false,'①の値は求められています。一成は「① × 一成側の比の数」で計算しよう。');
   }
 }
