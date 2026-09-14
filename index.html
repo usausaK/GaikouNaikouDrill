@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>比の公式ドリル｜内項の積＝外項の積</title>
+<style>
+:root{
+  --bg:#f7f8fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
+  --line:#e5e7eb; --ok:#ecfdf5; --ng:#fef2f2; --accent:#111827;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+}
+.wrap{max-width:760px;margin:0 auto;padding:18px 14px 40px}
+.top{
+  position:sticky;top:0;z-index:10;background:rgba(247,248,251,.96);
+  backdrop-filter:blur(8px);padding:10px 0 12px;
+}
+.title{font-size:20px;font-weight:800;margin:0 0 8px}
+.progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.bar{height:100%;background:#111827;width:0;transition:.25s}
+.meta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);margin-top:7px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:22px;margin-top:14px;box-shadow:0 5px 20px rgba(0,0,0,.04)
+}
+.rule{
+  font-size:18px;font-weight:900;line-height:1.6;
+  padding:14px 16px;border-radius:14px;background:#f3f4f6;margin-bottom:20px;
+}
+.rule strong{font-size:22px}
+.ratio{text-align:center;font-size:36px;font-weight:800;letter-spacing:.03em;margin:18px 0 10px}
+.hint{text-align:center;color:var(--muted);font-size:14px;margin-bottom:18px}
+.stepTitle{font-size:22px;font-weight:900;line-height:1.45;margin:4px 0 14px}
+.prompt{font-size:18px;line-height:1.8;margin:8px 0 18px}
+.choices{display:grid;gap:10px}
+button{
+  appearance:none;border:1px solid #d1d5db;background:#fff;color:#111827;
+  border-radius:12px;padding:14px 16px;font-size:17px;font-weight:700;cursor:pointer;transition:.15s
+}
+button:hover{transform:translateY(-1px)}
+button.primary{background:#111827;color:#fff;border-color:#111827}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.inputRow{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+input{
+  width:110px;padding:13px 12px;border:2px solid #d1d5db;border-radius:12px;
+  font-size:22px;text-align:center;font-weight:800
+}
+.feedback{display:none;margin-top:16px;padding:14px;border-radius:12px;font-weight:700;line-height:1.7}
+.feedback.ok{display:block;background:var(--ok)}
+.feedback.ng{display:block;background:var(--ng)}
+.next{display:none;width:100%;margin-top:16px}
+.eqbox{
+  text-align:center;font-size:26px;font-weight:900;padding:16px;border:2px dashed #d1d5db;
+  border-radius:14px;margin:14px 0 18px;line-height:1.6
+}
+.tag{display:inline-block;border:1px solid #d1d5db;border-radius:999px;padding:3px 9px;font-size:12px;color:#4b5563;margin-bottom:8px}
+.note{font-size:14px;color:var(--muted);line-height:1.7}
+.finish{text-align:center}
+.finish h2{font-size:28px}
+.story{
+  background:#fffaf0;border:1px solid #f2dfb7;border-radius:14px;
+  padding:16px;font-size:18px;line-height:1.8;margin:8px 0 18px
+}
+.story b{font-size:19px}
+.namebox{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0
+}
+.namebox div{
+  text-align:center;border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fafafa;font-weight:800
+}
+@media (max-width:520px){
+  .card{padding:18px 16px}
+  .ratio{font-size:30px}
+  .rule{font-size:16px}
+  .rule strong{font-size:19px}
+  .stepTitle{font-size:20px}
+  .prompt,.story{font-size:17px}
+  .eqbox{font-size:22px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1 class="title">比の公式ドリル</h1>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="meta">
+      <span id="progressText">1 / 12 問</span>
+      <span id="scoreText">正解 0</span>
+    </div>
+  </div>
+  <main id="app"></main>
+</div>
+
+<script>
+const problems = [
+  {type:"basic",a:2,b:3,c:8,d:12},
+  {type:"basic",a:4,b:7,c:12,d:21},
+  {type:"basic",a:3,b:5,c:9,d:15},
+  {type:"basic",a:6,b:8,c:9,d:12},
+
+  {type:"box",a:3,b:"□",c:12,d:20,answer:5},
+  {type:"box",a:"□",b:7,c:12,d:21,answer:4},
+  {type:"box",a:8,b:12,c:"□",d:18,answer:12},
+  {type:"box",a:10,b:15,c:14,d:"□",answer:21},
+
+  {
+    type:"word",
+    story:"同じ入場料が、一成の財布の中身の20％、尋子の財布の中身の30％にあたります。財布の中身の比（一成：尋子）は？",
+    kazuPct:20, hiroPct:30, answerA:3, answerB:2,
+    item:"財布の中身"
+  },
+  {
+    type:"word",
+    story:"一成のペットボトルの残りの40％は、尋子のペットボトルの残りの25％と同じ量です。ペットボトルの残りの比（一成：尋子）は？",
+    kazuPct:40, hiroPct:25, answerA:5, answerB:8,
+    item:"ペットボトルの残り"
+  },
+  {
+    type:"word",
+    story:"一成の貯金の25％は、尋子の貯金の40％と同じ金額です。貯金額の比（一成：尋子）は？",
+    kazuPct:25, hiroPct:40, answerA:8, answerB:5,
+    item:"貯金額"
+  },
+  {
+    type:"word",
+    story:"同じ買い物代が、一成のおこづかいの30％、尋子のおこづかいの45％にあたります。おこづかいの比（一成：尋子）は？",
+    kazuPct:30, hiroPct:45, answerA:3, answerB:2,
+    item:"おこづかい"
+  }
+];
+
+let pIndex=0, step=0, score=0, locked=false;
+const app=document.getElementById("app");
+const bar=document.getElementById("bar");
+const progressText=document.getElementById("progressText");
+const scoreText=document.getElementById("scoreText");
+
+function phrase(){
+  return `<div class="rule">毎回この言葉を読もう<br><strong>「内項の積＝外項の積の公式を利用して」</strong></div>`;
+}
+function ratioText(p){ return `${p.a} ： ${p.b} ＝ ${p.c} ： ${p.d}`; }
+function rand(arr){ return [...arr].sort(()=>Math.random()-.5); }
+function gcd(a,b){ while(b){[a,b]=[b,a%b]} return a; }
+
+function updateHeader(){
+  const totalSteps=problems.length*4;
+  const done=pIndex*4+step;
+  bar.style.width=`${Math.min(100,done/totalSteps*100)}%`;
+  progressText.textContent=`${Math.min(pIndex+1,problems.length)} / ${problems.length} 問`;
+  scoreText.textContent=`正解 ${score}`;
+}
+function card(content){
+  app.innerHTML=`<section class="card">${content}</section>`;
+  updateHeader();
+}
+function feedback(ok,msg){
+  const f=document.getElementById("feedback");
+  f.className="feedback "+(ok?"ok":"ng");
+  f.innerHTML=msg;
+}
+function showNext(){ document.getElementById("next").style.display="block"; }
+function nextStep(){
+  step++;
+  if(step>=4){step=0;pIndex++;}
+  render();
+}
+function render(){
+  locked=false;
+  if(pIndex>=problems.length){finish();return;}
+  const p=problems[pIndex];
+  if(p.type==="word") return renderWord(p);
+  if(step===0) renderInner(p);
+  if(step===1) renderOuter(p);
+  if(step===2) renderEquation(p);
+  if(step===3) renderSolve(p);
+}
+
+function renderInner(p){
+  const inner=`${p.b} × ${p.c}`;
+  const options=rand([inner,`${p.a} × ${p.d}`,`${p.a} × ${p.c}`]);
+  card(`
+    <div class="tag">STEP 1 / 4</div>${phrase()}
+    <div class="ratio">${ratioText(p)}</div>
+    <div class="hint">真ん中どうしが「内項」</div>
+    <div class="stepTitle">内項の積はどれ？</div>
+    <div class="prompt">「内項の積＝外項の積の公式を利用して」、まず内項の2つを見つけよう。</div>
+    <div class="choices">${options.map(x=>`<button onclick="answerChoice(this,'${x}')">${x}</button>`).join("")}</div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next" class="next primary" onclick="nextStep()">次のステップへ</button>
+  `);
+}
+function renderOuter(p){
+  const outer=`${p.a} × ${p.d}`;
+  const options=rand([outer,`${p.b} × ${p.c}`,`${p.b} × ${p.d}`]);
+  card(`
+    <div class="tag">STEP 2 / 4</div>${phrase()}
+    <div class="ratio">${ratioText(p)}</div>
+    <div class="hint">両はしが「外項」</div>
+    <div class="stepTitle">外項の積はどれ？</div>
+    <div class="prompt">「内項の積＝外項の積の公式を利用して」、今度は外項の2つを見つけよう。</div>
+    <div class="choices">${options.map(x=>`<button onclick="answerChoice(this,'${x}')">${x}</button>`).join("")}</div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next" class="next primary" onclick="nextStep()">次のステップへ</button>
+  `);
+}
+function renderEquation(p){
+  const ans=`${p.b} × ${p.c} ＝ ${p.a} × ${p.d}`;
+  const options=rand([ans,`${p.a} × ${p.b} ＝ ${p.c} × ${p.d}`,`${p.a} × ${p.c} ＝ ${p.b} × ${p.d}`]);
+  card(`
+    <div class="tag">STEP 3 / 4</div>${phrase()}
+    <div class="ratio">${ratioText(p)}</div>
+    <div class="stepTitle">公式の形にしよう</div>
+    <div class="prompt">「内項の積＝外項の積の公式を利用して」、正しい式を1つ選ぼう。</div>
+    <div class="choices">${options.map(x=>`<button onclick="answerChoice(this,'${x}')">${x}</button>`).join("")}</div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next" class="next primary" onclick="nextStep()">次のステップへ</button>
+  `);
+}
+function renderSolve(p){
+  if(p.type==="basic"){
+    const left=Number(p.b)*Number(p.c), right=Number(p.a)*Number(p.d);
+    card(`
+      <div class="tag">STEP 4 / 4</div>${phrase()}
+      <div class="ratio">${ratioText(p)}</div>
+      <div class="stepTitle">左右の積が同じか確かめよう</div>
+      <div class="prompt">「内項の積＝外項の積の公式を利用して」、内項と外項をそれぞれ計算しよう。</div>
+      <div class="eqbox">${p.b} × ${p.c} ＝ ${p.a} × ${p.d}</div>
+      <div class="inputRow">
+        <input id="left" inputmode="numeric" placeholder="内項">
+        <span style="font-size:24px;font-weight:900">＝</span>
+        <input id="right" inputmode="numeric" placeholder="外項">
+      </div>
+      <button class="primary" style="width:100%;margin-top:14px" onclick="checkProducts(${left},${right})">答え合わせ</button>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="next primary" onclick="nextStep()">次の問題へ</button>
+    `);
+  }else{
+    const eq=`${p.b} × ${p.c} ＝ ${p.a} × ${p.d}`;
+    card(`
+      <div class="tag">STEP 4 / 4</div>${phrase()}
+      <div class="ratio">${ratioText(p)}</div>
+      <div class="stepTitle">□の値を求めよう</div>
+      <div class="prompt">「内項の積＝外項の積の公式を利用して」、まずこの式にしてから計算しよう。</div>
+      <div class="eqbox">${eq}</div>
+      <div class="inputRow"><span style="font-size:22px;font-weight:800">□ ＝</span><input id="xans" inputmode="numeric" placeholder="?"></div>
+      <button class="primary" style="width:100%;margin-top:14px" onclick="checkX(${p.answer})">答え合わせ</button>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="next primary" onclick="nextStep()">次の問題へ</button>
+    `);
+  }
+}
+
+function renderWord(p){
+  const a=p.kazuPct, b=p.hiroPct;
+  const rawA=b, rawB=a;
+  const g=gcd(rawA,rawB);
+  const simpleA=rawA/g, simpleB=rawB/g;
+
+  if(step===0){
+    const correct=`一成 × ${a}％ ＝ 尋子 × ${b}％`;
+    const opts=rand([
+      correct,
+      `一成 × ${b}％ ＝ 尋子 × ${a}％`,
+      `一成 ＋ ${a}％ ＝ 尋子 ＋ ${b}％`
+    ]);
+    card(`
+      <div class="tag">文章題 STEP 1 / 4</div>${phrase()}
+      <div class="story"><b>問題</b><br>${p.story}</div>
+      <div class="stepTitle">まず「同じ量」を式にしよう</div>
+      <div class="prompt">同じ入場料・同じ量・同じ金額になっている部分を見つけます。</div>
+      <div class="choices">${opts.map(x=>`<button onclick="answerChoice(this,'${x}')">${x}</button>`).join("")}</div>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="next primary" onclick="nextStep()">次のステップへ</button>
+    `);
+  }
+
+  if(step===1){
+    const correct=`一成 ： 尋子 ＝ ${b} ： ${a}`;
+    const opts=rand([
+      correct,
+      `一成 ： 尋子 ＝ ${a} ： ${b}`,
+      `一成 ： 尋子 ＝ ${a+b} ： 100`
+    ]);
+    card(`
+      <div class="tag">文章題 STEP 2 / 4</div>${phrase()}
+      <div class="story">${p.story}</div>
+      <div class="eqbox">一成 × ${a}％ ＝ 尋子 × ${b}％</div>
+      <div class="stepTitle">比の形に直そう</div>
+      <div class="prompt">「内項の積＝外項の積の公式を利用して」、一成：尋子 の比になる式を選ぼう。<br><b>％の数字は反対側へ来る</b>のがポイントです。</div>
+      <div class="choices">${opts.map(x=>`<button onclick="answerChoice(this,'${x}')">${x}</button>`).join("")}</div>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="next primary" onclick="nextStep()">次のステップへ</button>
+    `);
+  }
+
+  if(step===2){
+    const correct=`${rawA} ： ${rawB}`;
+    const opts=rand([
+      correct,
+      `${a} ： ${b}`,
+      `${Math.abs(b-a)} ： ${Math.min(a,b)}`
+    ]);
+    card(`
+      <div class="tag">文章題 STEP 3 / 4</div>${phrase()}
+      <div class="story">${p.story}</div>
+      <div class="stepTitle">まだ約分しない比はどれ？</div>
+      <div class="prompt">「内項の積＝外項の積の公式を利用して」、<b>一成：尋子</b> をそのまま数字で表そう。</div>
+      <div class="eqbox">一成 ： 尋子 ＝ ${b} ： ${a}</div>
+      <div class="choices">${opts.map(x=>`<button onclick="answerChoice(this,'${x}')">${x}</button>`).join("")}</div>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="next primary" onclick="nextStep()">次のステップへ</button>
+    `);
+  }
+
+  if(step===3){
+    card(`
+      <div class="tag">文章題 STEP 4 / 4</div>${phrase()}
+      <div class="story">${p.story}</div>
+      <div class="stepTitle">${p.item}の比を、いちばん簡単な整数比で答えよう</div>
+      <div class="eqbox">${b} ： ${a} → ？ ： ？</div>
+      <div class="namebox"><div>一成</div><div>尋子</div></div>
+      <div class="inputRow">
+        <input id="wa" inputmode="numeric" placeholder="一成">
+        <span style="font-size:24px;font-weight:900">：</span>
+        <input id="wb" inputmode="numeric" placeholder="尋子">
+      </div>
+      <button class="primary" style="width:100%;margin-top:14px" onclick="checkWord(${simpleA},${simpleB})">答え合わせ</button>
+      <div id="feedback" class="feedback"></div>
+      <button id="next" class="next primary" onclick="nextStep()">次の問題へ</button>
+    `);
+  }
+}
+
+function answerChoice(btn,correct){
+  if(locked)return;
+  const selected=btn.textContent.trim();
+  if(selected===correct){
+    locked=true;score++;
+    feedback(true,'正解！<br>もう一度声に出そう：<br><strong>「内項の積＝外項の積の公式を利用して」</strong>');
+    [...document.querySelectorAll(".choices button")].forEach(b=>b.disabled=true);
+    showNext();updateHeader();
+  }else{
+    feedback(false,'ちがいます。<br><strong>「内項の積＝外項の積の公式を利用して」</strong> と言いながら、もう一度考えよう。');
+  }
+}
+function checkProducts(l,r){
+  if(locked)return;
+  const lv=Number(document.getElementById("left").value), rv=Number(document.getElementById("right").value);
+  if(lv===l&&rv===r){
+    locked=true;score++;
+    feedback(true,`正解！ ${l} ＝ ${r}<br>だから、<strong>内項の積＝外項の積</strong> になっています。`);
+    showNext();updateHeader();
+  }else feedback(false,'もう一度計算してみよう。<br>合言葉は <strong>「内項の積＝外項の積の公式を利用して」</strong>。');
+}
+function checkX(ans){
+  if(locked)return;
+  const v=Number(document.getElementById("xans").value);
+  if(v===ans){
+    locked=true;score++;
+    feedback(true,`正解！ □ ＝ ${ans}<br>最後にもう一度：<strong>「内項の積＝外項の積の公式を利用して」</strong>`);
+    showNext();updateHeader();
+  }else feedback(false,'ちがいます。式をもう一度見て、内項の積と外項の積を同じにしよう。');
+}
+function checkWord(a,b){
+  if(locked)return;
+  const av=Number(document.getElementById("wa").value), bv=Number(document.getElementById("wb").value);
+  if(av===a&&bv===b){
+    locked=true;score++;
+    feedback(true,`正解！ <strong>一成：尋子 ＝ ${a}：${b}</strong><br>「内項の積＝外項の積の公式を利用して」、％を反対側に置くと比が求められます。`);
+    showNext();updateHeader();
+  }else{
+    feedback(false,'もう一度。<br><strong>一成 × 一成側の％ ＝ 尋子 × 尋子側の％</strong> から、％の数字を反対側に置いて比を作ろう。');
+  }
+}
+function finish(){
+  bar.style.width="100%";
+  app.innerHTML=`
+    <section class="card finish">
+      <h2>ドリル完了！</h2>
+      <div class="rule">最後に3回読もう<br><strong>「内項の積＝外項の積の公式を利用して」</strong></div>
+      <p style="font-size:20px;font-weight:800">正解数：${score} / ${problems.length*4}</p>
+      <p class="note">文章題でも「同じ量」を見つけて式にし、内項の積＝外項の積から比を作る練習をしました。</p>
+      <button class="primary" style="width:100%" onclick="restart()">もう一度やる</button>
+    </section>`;
+}
+function restart(){pIndex=0;step=0;score=0;render();}
+render();
+</script>
+</body>
+</html>
