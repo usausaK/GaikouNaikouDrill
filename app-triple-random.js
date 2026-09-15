@@ -1,5 +1,6 @@
 // 問題11・12（三項比）の割合と人物への割り当てを毎回変える。
 // 暗算で解ける組み合わせだけを使用し、STEP 8でチケット代を⑤にそろえられる設定に限定する。
+// さらに、直前と同じ「一成×…＝尋子×…＝ダン×…」は連続して出さない。
 
 const tripleVariantSets = [
   [
@@ -16,6 +17,11 @@ const tripleVariantSets = [
     {n:1,d:2}, // 1/2
     {n:1,d:3}, // 1/3
     {n:1,d:4}  // 1/4
+  ],
+  [
+    {n:1,d:3}, // 1/3
+    {n:1,d:2}, // 1/2
+    {n:2,d:3}  // 2/3
   ]
 ];
 
@@ -27,6 +33,7 @@ function tripleDisplayLabel(f){
     '1/2':['50％','1/2'],
     '1/4':['25％','1/4'],
     '1/3':['1/3'],
+    '2/3':['2/3'],
     '5/6':['5/6'],
     '5/8':['5/8','62.5％']
   };
@@ -54,10 +61,19 @@ function allTripleVariants(){
   return out;
 }
 
+function getStoredTripleKey(place){
+  try{return localStorage.getItem(`gaikouTripleLast:${place}`)||'';}catch(e){return '';}
+}
+function setStoredTripleKey(place,key){
+  try{localStorage.setItem(`gaikouTripleLast:${place}`,key);}catch(e){}
+}
+
 let currentLandTripleKey='';
 
 function makeRandomDisneyTriple(place,avoidKey=''){
-  const candidates=allTripleVariants().filter(v=>v.key!==avoidKey);
+  const lastKey=getStoredTripleKey(place);
+  let candidates=allTripleVariants().filter(v=>v.key!==lastKey && v.key!==avoidKey);
+  if(!candidates.length)candidates=allTripleVariants().filter(v=>v.key!==avoidKey);
   const v=pick(candidates);
   const [a,b,c]=v.fractions;
   const problem=makeTriple(
@@ -67,6 +83,7 @@ function makeRandomDisneyTriple(place,avoidKey=''){
     tripleDisplayLabel(c),c
   );
   problem.variantKey=v.key;
+  setStoredTripleKey(place,v.key);
   return problem;
 }
 
@@ -77,5 +94,6 @@ disneyLandTriple=function(){
 };
 
 disneySeaTriple=function(){
+  // 同じ回の問題11と問題12も、同一パターンにはしない。
   return makeRandomDisneyTriple('ディズニーシー',currentLandTripleKey);
 };
