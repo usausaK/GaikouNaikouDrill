@@ -1,6 +1,6 @@
 // 三項比の最終調整
 // 1) STEP 6の選択肢を重複させない
-// 2) STEP 8のチケット代を固定⑤ではなく問題ごとの ticketTarget にする
+// 2) STEP 8は「チケット代を整数にするための最小倍率」を表示する
 
 const renderTripleBeforeTicketDynamic=renderTriple;
 
@@ -17,8 +17,31 @@ function uniqueTripleChoices(items){
 }
 
 function dynamicTicketDistractors(target){
-  const pool=[2,3,4,5,6,7,8,9,10].filter(n=>n!==target);
+  const pool=[1,2,3,4,5,6,7,8,9,10].filter(n=>n!==target);
   return shuffle(pool).slice(0,2);
+}
+
+function getMinimalTicketInfoForStep8(p){
+  if(p.ticketScale && p.ticketTarget){
+    return {
+      scale:p.ticketScale,
+      target:p.ticketTarget,
+      scaledA:p.ticketScaledA || p.answerA*p.ticketScale,
+      scaledB:p.ticketScaledB || p.answerB*p.ticketScale,
+      scaledC:p.ticketScaledC || p.answerC*p.ticketScale
+    };
+  }
+  const num=p.answerA*p.aFrac.n;
+  const den=p.aFrac.d;
+  const g=tripleGcd(num,den);
+  const scale=den/g;
+  return {
+    scale,
+    target:num/g,
+    scaledA:p.answerA*scale,
+    scaledB:p.answerB*scale,
+    scaledC:p.answerC*scale
+  };
 }
 
 renderTriple=function(p){
@@ -49,26 +72,24 @@ renderTriple=function(p){
     `);
   }
 
-  // STEP 8：チケット代を問題ごとに変える。
+  // STEP 8：必要な最小倍率だけを使う。
   if(step===7){
-    const target=p.ticketTarget||5;
-    const ticketUnit=p.answerA*p.aFrac.n/p.aFrac.d;
-    const scale=target/ticketUnit;
-    const scaledA=Math.round(p.answerA*scale);
-    const scaledB=Math.round(p.answerB*scale);
-    const scaledC=Math.round(p.answerC*scale);
+    const info=getMinimalTicketInfoForStep8(p);
+    const {scale,target,scaledA,scaledB,scaledC}=info;
     const targetCircle=circledForTriple(target);
     const ratioCircle=`${circledForTriple(scaledA)}：${circledForTriple(scaledB)}：${circledForTriple(scaledC)}`;
     const baseRatio=`${p.answerA}：${p.answerB}：${p.answerC}`;
-    const scaleText=Number.isInteger(scale)?String(scale):String(Math.round(scale*100)/100);
     const distractors=dynamicTicketDistractors(target);
+    const scaleSentence = scale===1
+      ? 'チケット代はすでに整数になるので、3つの数はそのまま（×1）'
+      : `チケット代が整数になるように3つの数に同じ数をかける（×${scale}）`;
 
     return card(`
       <div class="tag">三項比 STEP 8 / 8</div>
       <div class="story">${p.story}</div>
       <div class="eqbox">
         一成：尋子：ダン ＝ ${baseRatio}<br>
-        <span style="font-size:.82em">チケット代が整数になるように3つの数に同じ数をかける（×${scaleText}）</span><br>
+        <span style="font-size:.82em">${scaleSentence}</span><br>
         ${baseRatio} ＝ ${ratioCircle}
       </div>
 
@@ -97,8 +118,8 @@ renderTriple=function(p){
 function answerTicketDynamic(btn){
   if(locked)return;
   const p=problems[pIndex];
-  const target=p.ticketTarget||5;
-  const targetCircle=circledForTriple(target);
+  const info=getMinimalTicketInfoForStep8(p);
+  const targetCircle=circledForTriple(info.target);
   if(btn.dataset.correct==='1'){
     locked=true;
     score++;
